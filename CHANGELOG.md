@@ -10,6 +10,10 @@
 
 ## Version History
 
+### v1.1.0
+
+- :tada: Add a generic Webhook endpoint that accepts any JSON or XML payload and logs it, authenticated by a `WEBHOOK_SECRET` shared secret
+
 ### v1.0.1
 
 - :arrow_up: Update Core Deps
