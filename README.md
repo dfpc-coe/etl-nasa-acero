@@ -36,8 +36,12 @@ node dist/task.js
 
 ### Webhook
 
-This ETL is invoked via Webhook rather than on a schedule. The endpoint accepts an arbitrary JSON or XML
-payload and logs it to console - it performs no submission to CloudTAK.
+This ETL is invoked via Webhook rather than on a schedule. The endpoint accepts NASA ACERO `Telemetry`
+Features and `Operation` FeatureCollections (containing `Volume` Features) as JSON, validates them against
+the TypeBox schema in `task.ts`, and submits them to CloudTAK. Each `Telemetry` report becomes a Point
+marker keyed by `gufi` carrying course and speed, and each `Volume` in an `Operation` becomes a Polygon
+colored by operation state (`APPROVED` green, `NONCONFORMING` orange, `CLOSED` grey). `CLOSED` volumes are
+submitted already stale so they drop off the map.
 
 Run the webhook server locally on port `5002` with:
 
@@ -54,19 +58,25 @@ Requests must present the `WEBHOOK_SECRET` configured in the Layer environment v
 curl -X POST http://localhost:5002/<webhookid> \
     -H 'Authorization: Bearer <secret>' \
     -H 'Content-Type: application/json' \
-    -d '{ "hello": "world" }'
+    -d '{
+        "type": "Feature",
+        "properties": {
+            "aceroType": "Telemetry",
+            "gufi": "59f8c628-a050-4d1e-85ca-55f1e60e24e6",
+            "timeMeasured": "2026-10-13T19:37:42.912Z",
+            "accuracyVertical": "Va1m",
+            "accuracyHorizontal": "Ha1m",
+            "groundSpeedMetersPerSecond": 2.002544,
+            "verticalSpeedMetersPerSecond": 0,
+            "trackDegreesEastOfNorth": 332.028,
+            "extrapolated": false
+        },
+        "geometry": { "type": "Point", "coordinates": [-122.0672965, 37.4290778, 22.65] }
+    }'
 ```
 
-```sh
-curl -X POST http://localhost:5002/<webhookid> \
-    -H 'X-Webhook-Secret: <secret>' \
-    -H 'Content-Type: application/xml' \
-    -d '<event uid="ABC"><point lat="39" lon="-105"/></event>'
-```
-
-Supported Content-Types are `application/json`, `application/xml`, and any `text/*` type. JSON bodies are
-logged as parsed & pretty printed objects, everything else is logged as the raw string. Any other
-Content-Type is rejected with a `400`.
+Only `application/json` is accepted. Payloads that do not match the `Telemetry` or `Operation` schema
+are rejected with a `400` describing the validation errors.
 
 ### Deployment
 

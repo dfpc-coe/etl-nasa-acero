@@ -10,6 +10,15 @@
 
 ## Version History
 
+### Pending Release
+
+### v1.6.0
+
+- :tada: Add TypeBox schemas for ACERO `Telemetry`, `Operation`, and `Volume` payloads and validate the webhook body against them
+- :rocket: Webhook now accepts `application/json` only
+- :tada: Submit `Telemetry` as Point markers and `Operation` volumes as state-colored Polygons via `this.submit`
+- :tada: Add `TELEMETRY_STALE_MINUTES` input
+
 ### v1.5.0
 
 - :arrow_up: Update Core Dependencies
