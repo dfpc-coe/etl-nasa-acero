@@ -12,6 +12,10 @@
 
 ### Pending Release
 
+### v1.6.1
+
+- :rocket: Update Core Deps
+
 ### v1.6.0
 
 - :tada: Add TypeBox schemas for ACERO `Telemetry`, `Operation`, and `Volume` payloads and validate the webhook body against them
