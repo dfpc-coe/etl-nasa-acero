@@ -6,20 +6,21 @@
     "description": "",
     "main": "task.ts",
     "scripts": {
-        "lint": "eslint *.ts",
+        "lint": "eslint *.ts test/",
         "build": "tsc --build",
-        "test": "exit 0"
+        "test": "tsx --test test/*.test.ts"
     },
     "author": "Nicholas Ingalls <nicholas.ingalls@state.co.us>",
     "license": "ISC",
     "devDependencies": {
         "@eslint/js": "^10.0.0",
         "eslint": "^10.0.0",
+        "tsx": "^4.23.15",
         "typescript": "^6.0.0",
         "typescript-eslint": "^8.0.0"
     },
     "dependencies": {
-        "@openaddresses/batch-schema": "^10.26.0",
+        "@openaddresses/batch-schema": "^10.30.0",
         "@sinclair/typebox": "^0.34.0",
         "@tak-ps/etl": "^10.0.0"
     }

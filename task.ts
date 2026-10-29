@@ -119,7 +119,10 @@ const Operation = Type.Object({
     description: 'Operation plan and its current state, emitted on every state change'
 });
 
-const Acero = Type.Union([Telemetry, Operation]);
+const Acero = Type.Unsafe<Static<typeof Telemetry> | Static<typeof Operation>>({
+    discriminator: { propertyName: 'type' },
+    oneOf: [Telemetry, Operation]
+});
 
 const StateColor: Record<string, string> = {
     APPROVED: '#2fb344',

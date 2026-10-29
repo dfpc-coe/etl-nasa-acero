@@ -12,6 +12,12 @@
 
 ### Pending Release
 
+### v1.7.0
+
+- :bug: Validate the webhook body as a `oneOf` discriminated on `type`. The previous `Type.Union` was evaluated as `anyOf`, and ajv's `removeAdditional` stripped every Operation key while checking the Telemetry branch, so all Operation posts were rejected with a 400
+- :arrow_up: Require `@openaddresses/batch-schema` 10.30.0 for the ajv `discriminator` keyword
+- :white_check_mark: Add webhook tests covering Telemetry and Operation body parsing through the discriminated `oneOf`
+
 ### v1.6.1
 
 - :rocket: Update Core Deps
