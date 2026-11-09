@@ -153,11 +153,12 @@ test('Operation FeatureCollection is accepted and submitted as volume polygons',
     const [first, second] = submitted[0].features;
     assert.equal(first.id, `acero-${GUFI}-volume-0`);
     assert.equal(second.id, `acero-${GUFI}-volume-1`);
-    assert.equal(first.properties.type, 'u-d-f');
+    assert.equal(first.properties.type, 'b-m-p-s-p-i');
     assert.equal(first.properties.callsign, 'ACERO 3f2b8c1e APPROVED');
-    assert.equal(first.properties.start, '2026-10-28T16:00:00.000Z');
+    assert.equal(first.properties.start, first.properties.time);
     assert.equal(first.properties.stale, '2026-10-28T17:00:00.000Z');
-    assert.equal(second.properties.start, '2026-10-28T17:00:00.000Z');
+    assert.equal(second.properties.stale, '2026-10-28T18:00:00.000Z');
+    assert.match(first.properties.remarks, /Active: 2026-10-28T16:00:00.000Z to 2026-10-28T17:00:00.000Z/);
     assert.equal(first.properties.stroke, '#2fb344');
     assert.match(first.properties.remarks, /Altitude: 1601m to 1800m WGS84/);
     assert.deepEqual(first.properties.metadata, {
@@ -168,13 +169,14 @@ test('Operation FeatureCollection is accepted and submitted as volume polygons',
     assert.deepEqual(first.geometry, operation().features[0].geometry);
 });
 
-test('CLOSED Operation volumes go stale immediately', async () => {
+test('CLOSED Operation volumes go stale shortly after they are submitted', async () => {
     const res = await post({ ...operation(), state: 'CLOSED' });
 
     assert.equal(res.status, 200);
 
     const feat = submitted[0].features[0];
-    assert.equal(feat.properties.stale, feat.properties.time);
+    assert.equal(+new Date(feat.properties.stale) - +new Date(feat.properties.time), 30 * 1000);
+    assert.equal(feat.properties.start, feat.properties.time);
     assert.equal(feat.properties.stroke, '#667382');
 });
 

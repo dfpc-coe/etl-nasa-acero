@@ -124,6 +124,9 @@ const Acero = Type.Unsafe<Static<typeof Telemetry> | Static<typeof Operation>>({
     oneOf: [Telemetry, Operation]
 });
 
+// An already stale CoT is dropped by CloudTAK before it reaches a client
+const CLOSED_STALE_SECONDS = 30;
+
 const StateColor: Record<string, string> = {
     APPROVED: '#2fb344',
     NONCONFORMING: '#f76707',
@@ -158,21 +161,26 @@ function telemetryFeature(
 function operationFeatures(
     body: Static<typeof Operation>
 ): Array<Static<typeof Feature.InputFeature>> {
-    const now = new Date().toISOString();
+    const time = new Date();
+    const now = time.toISOString();
     const color = StateColor[body.state] || '#206bc4';
 
     return body.features.map((volume, idx) => {
-        const stale = body.state === 'CLOSED' ? now : volume.properties.timeEnd;
+        const stale = body.state === 'CLOSED'
+            ? new Date(time.getTime() + CLOSED_STALE_SECONDS * 1000).toISOString()
+            : volume.properties.timeEnd;
 
         return {
             id: `acero-${body.gufi}-volume-${idx}`,
             type: 'Feature',
             properties: {
                 callsign: `ACERO ${body.gufi.slice(0, 8)} ${body.state}`,
-                type: 'u-d-f',
+                // A marker type delivers the Polygon as a companion shape that expires with the marker
+                type: 'b-m-p-s-p-i',
                 how: 'h-e',
                 time: now,
-                start: volume.properties.timeStart,
+                // ATAK expires a marker 1.5 x (stale - start) after it is received
+                start: now,
                 stale,
                 stroke: color,
                 'stroke-opacity': 0.75,

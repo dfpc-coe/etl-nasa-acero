@@ -10,11 +10,18 @@
 
 ## Version History
 
+### Pending Release
+
+### v1.9.0
+
+- :arrow_up: Update `@tak-ps/etl` to 11.x - Output schemas are published as named schemas, as required by CloudTAK v14
+- :rocket: Submit Operation volumes as expiring Polygons - a `b-m-p-s-p-i` marker with a companion shape that TAK clients remove once stale, in place of a persistent `u-d-f` drawing
+- :rocket: Report volume `start` as the submission time so that ATAK, which expires a marker 1.5 x (`stale` - `start`) after receipt, holds the volume until `timeEnd`
+- :bug: `CLOSED` volumes go stale 30 seconds after submission - an already stale CoT is dropped by CloudTAK and never reached a client to clear the volume
+
 ### v1.8.0
 
 - :arrow_up: Update Core Dependencies
-
-### Pending Release
 
 ### v1.7.0
 

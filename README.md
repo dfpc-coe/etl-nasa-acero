@@ -39,9 +39,11 @@ node dist/task.js
 This ETL is invoked via Webhook rather than on a schedule. The endpoint accepts NASA ACERO `Telemetry`
 Features and `Operation` FeatureCollections (containing `Volume` Features) as JSON, validates them against
 the TypeBox schema in `task.ts`, and submits them to CloudTAK. Each `Telemetry` report becomes a Point
-marker keyed by `gufi` carrying course and speed, and each `Volume` in an `Operation` becomes a Polygon
-colored by operation state (`APPROVED` green, `NONCONFORMING` orange, `CLOSED` grey). `CLOSED` volumes are
-submitted already stale so they drop off the map.
+marker keyed by `gufi` carrying course and speed, and each `Volume` in an `Operation` becomes an expiring
+Polygon colored by operation state (`APPROVED` green, `NONCONFORMING` orange, `CLOSED` grey). Volumes are
+submitted as a `b-m-p-s-p-i` marker with a companion shape so that TAK clients remove them once they go
+stale at `timeEnd`, rather than persisting them like a `u-d-f` drawing. `CLOSED` volumes go stale 30 seconds
+after they are submitted so they drop off the map.
 
 Run the webhook server locally on port `5002` with:
 
