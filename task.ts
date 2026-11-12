@@ -1,6 +1,7 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import type { TSchema, Static } from '@sinclair/typebox';
 import { Type } from '@sinclair/typebox';
+import { ellipsoidToEgm96 } from 'egm96-universal';
 import type { Event } from '@tak-ps/etl';
 import ETL, { Feature, SchemaType, handler as internal, local, DataFlowType, InvocationType } from '@tak-ps/etl';
 import type Schema from '@openaddresses/batch-schema';
@@ -133,6 +134,15 @@ const StateColor: Record<string, string> = {
     CLOSED: '#667382'
 };
 
+const FEET_PER_METER = 3.28084;
+
+function mslFeet(coordinates: number[]): number | undefined {
+    const [lon, lat, hae] = coordinates;
+    if (hae === undefined) return undefined;
+
+    return Math.round(ellipsoidToEgm96(lat, lon, hae) * FEET_PER_METER);
+}
+
 function telemetryFeature(
     body: Static<typeof Telemetry>,
     staleMinutes: number
@@ -140,11 +150,14 @@ function telemetryFeature(
     const time = new Date(body.properties.timeMeasured);
     const stale = new Date(time.getTime() + staleMinutes * 60 * 1000);
 
+    const msl = mslFeet(body.geometry.coordinates);
+    const callsign = `ACERO ${body.properties.gufi.slice(0, 8)}`;
+
     return {
         id: `acero-${body.properties.gufi}`,
         type: 'Feature',
         properties: {
-            callsign: `ACERO ${body.properties.gufi.slice(0, 8)}`,
+            callsign: msl === undefined ? callsign : `${callsign} - ${msl}ft`,
             type: 'a-f-A-M-F-Q',
             how: 'm-g',
             time: time.toISOString(),

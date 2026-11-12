@@ -12,6 +12,10 @@
 
 ### Pending Release
 
+### v1.10.0
+
+- :rocket: Include MSL Value in callsign name
+
 ### v1.9.0
 
 - :arrow_up: Update `@tak-ps/etl` to 11.x - Output schemas are published as named schemas, as required by CloudTAK v14

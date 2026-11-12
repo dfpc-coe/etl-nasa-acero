@@ -122,7 +122,7 @@ test('Telemetry Feature is accepted and submitted as an aircraft marker', async 
     const feat = submitted[0].features[0];
     assert.equal(feat.id, `acero-${GUFI}`);
     assert.equal(feat.properties.type, 'a-f-A-M-F-Q');
-    assert.equal(feat.properties.callsign, 'ACERO 3f2b8c1e');
+    assert.equal(feat.properties.callsign, 'ACERO 3f2b8c1e - 5469ft');
     assert.equal(feat.properties.time, '2026-10-28T16:00:00.000Z');
     assert.equal(feat.properties.stale, '2026-10-28T16:05:00.000Z');
     assert.equal(feat.properties.course, 270);
