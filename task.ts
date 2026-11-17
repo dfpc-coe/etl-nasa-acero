@@ -259,17 +259,18 @@ export default class Task extends ETL {
                 status: Type.Integer(),
                 message: Type.String()
             })
-        }, async (req, res) => {
-            const presented = String(req.headers['x-webhook-secret'] || '')
-                || String(req.headers['authorization'] || '').replace(/^Bearer\s+/i, '');
+        }, (req, res, next) => {
+            const presented = String(req.headers['x-webhook-secret'] ?? '')
+                || (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
 
             if (!secretMatches(presented, env.WEBHOOK_SECRET)) {
                 console.error(`not ok - ${req.params.webhookid}: rejected request with invalid shared secret`);
 
-                return res.status(401).json({
+                res.status(401).json({
                     status: 401,
                     message: 'Unauthorized'
                 });
+                return;
             }
 
             if (env.DEBUG) {
@@ -295,12 +296,20 @@ export default class Task extends ETL {
                 console.log(JSON.stringify(fc, null, 2));
             }
 
-            await task.submit(fc);
+            const submit = async (): Promise<void> => {
+                try {
+                    await task.submit(fc);
 
-            return res.json({
-                status: 200,
-                message: `Submitted ${fc.features.length} features`
-            });
+                    res.json({
+                        status: 200,
+                        message: `Submitted ${fc.features.length} features`
+                    });
+                } catch (err) {
+                    next(err);
+                }
+            };
+
+            void submit();
         });
     }
 
@@ -309,18 +318,16 @@ export default class Task extends ETL {
         flow: DataFlowType = DataFlowType.Incoming
     ): Promise<TSchema> {
         if (flow === DataFlowType.Incoming) {
-            if (type === SchemaType.Input) {
-                return InputSchema;
-            } else {
-                return OutputSchema;
-            }
-        } else {
-            return Type.Object({});
+            if (type === SchemaType.Input) return InputSchema;
+
+            return OutputSchema;
         }
+
+        return Type.Object({});
     }
 }
 
 await local(await Task.init(import.meta.url), import.meta.url);
-export async function handler(event: Event = {}, context?: object) {
-    return await internal(new Task(import.meta.url), event, context);
+export async function handler(event: Event = {}, context?: object): ReturnType<typeof internal> {
+    return internal(new Task(import.meta.url), event, context);
 }

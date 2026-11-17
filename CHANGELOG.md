@@ -12,6 +12,12 @@
 
 ### Pending Release
 
+### v1.11.0 - 2026-11-17
+
+- :arrow_up: Migrate to TS7 for blazing build times
+- :arrow_up: Migrate off ESLint onto OXLint for blazing lint times
+- :bug: Fix numerous small bugs in the codebase surfaced by OXLint
+
 ### v1.10.0
 
 - :rocket: Include MSL Value in callsign name

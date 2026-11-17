@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert';
 import type { AddressInfo } from 'node:net';
 import type { Server } from 'node:http';
+import { once } from 'node:events';
+import type { Static } from '@sinclair/typebox';
+import type { Feature } from '@tak-ps/etl';
 
 process.env.ETL_API = process.env.ETL_API || 'http://localhost:5001';
 process.env.ETL_LAYER = process.env.ETL_LAYER || '1';
@@ -12,7 +15,7 @@ const { default: Task } = await import('../task.js');
 const SECRET = 'test-secret';
 const GUFI = '3f2b8c1e-6d4a-4b9e-9a7c-2e5f1d0c8b6a';
 
-const submitted: Array<{ type: string, features: Array<any> }> = [];
+const submitted: Array<Static<typeof Feature.InputFeatureCollection>> = [];
 
 const task = new Task(import.meta.url, { logging: { webhooks: false } });
 // @ts-expect-error Stub Layer config so env() does not hit the API
@@ -26,6 +29,7 @@ task.layer = {
     }
 };
 task.submit = async (fc) => {
+    if (!('features' in fc) || 'schema' in fc) throw new Error('Expected a FeatureCollection');
     submitted.push(fc);
     return true;
 };
@@ -36,7 +40,7 @@ let base: string;
 test.before(async () => {
     const app = await task.controlWebhooks();
     server = app.listen(0);
-    await new Promise((resolve) => server.once('listening', resolve));
+    await once(server, 'listening');
     base = `http://localhost:${(server.address() as AddressInfo).port}`;
 });
 
@@ -48,7 +52,7 @@ test.beforeEach(() => {
     submitted.length = 0;
 });
 
-async function post(body: unknown): Promise<{ status: number, body: any }> {
+async function post(body: unknown): Promise<{ status: number, body: unknown }> {
     const res = await fetch(`${base}/test-webhook`, {
         method: 'POST',
         headers: {
@@ -58,7 +62,9 @@ async function post(body: unknown): Promise<{ status: number, body: any }> {
         body: JSON.stringify(body)
     });
 
-    return { status: res.status, body: await res.json() };
+    const json: unknown = await res.json();
+
+    return { status: res.status, body: json };
 }
 
 function telemetry() {
@@ -158,9 +164,9 @@ test('Operation FeatureCollection is accepted and submitted as volume polygons',
     assert.equal(first.properties.start, first.properties.time);
     assert.equal(first.properties.stale, '2026-10-28T17:00:00.000Z');
     assert.equal(second.properties.stale, '2026-10-28T18:00:00.000Z');
-    assert.match(first.properties.remarks, /Active: 2026-10-28T16:00:00.000Z to 2026-10-28T17:00:00.000Z/);
+    assert.match(first.properties.remarks!, /Active: 2026-10-28T16:00:00.000Z to 2026-10-28T17:00:00.000Z/);
     assert.equal(first.properties.stroke, '#2fb344');
-    assert.match(first.properties.remarks, /Altitude: 1601m to 1800m WGS84/);
+    assert.match(first.properties.remarks!, /Altitude: 1601m to 1800m WGS84/);
     assert.deepEqual(first.properties.metadata, {
         gufi: GUFI,
         state: 'APPROVED',
@@ -175,7 +181,7 @@ test('CLOSED Operation volumes go stale shortly after they are submitted', async
     assert.equal(res.status, 200);
 
     const feat = submitted[0].features[0];
-    assert.equal(+new Date(feat.properties.stale) - +new Date(feat.properties.time), 30 * 1000);
+    assert.equal(+new Date(feat.properties.stale!) - +new Date(feat.properties.time!), 30 * 1000);
     assert.equal(feat.properties.start, feat.properties.time);
     assert.equal(feat.properties.stroke, '#667382');
 });
@@ -195,8 +201,8 @@ test('Unknown keys are stripped from the matching branch only', async () => {
     const res2 = await post({ ...op, extra: true });
 
     assert.equal(res2.status, 200);
-    assert.equal(submitted[1].features[0].properties.metadata.gufi, GUFI);
-    assert.equal(submitted[1].features[0].properties.metadata.state, 'APPROVED');
+    assert.equal(submitted[1].features[0].properties.metadata?.gufi, GUFI);
+    assert.equal(submitted[1].features[0].properties.metadata?.state, 'APPROVED');
 });
 
 test('Unknown discriminator value is rejected', async () => {
